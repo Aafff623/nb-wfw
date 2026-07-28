@@ -1,0 +1,277 @@
+---
+description: Spring Boot 3.x + Spring Cloud 微服务开发规范（2026 最佳实践）
+globs:
+  - "**/*.java"
+  - "**/pom.xml"
+  - "**/application*.yml"
+  - "**/application*.yaml"
+  - "**/application*.properties"
+alwaysApply: true
+---
+
+# Spring Boot 3.x + Spring Cloud 开发规范
+
+## 技术栈基线
+
+- **Java**: 17 或 21+（优先 21，启用 Virtual Threads）
+- **Spring Boot**: 3.2+（优先 3.5 或更高稳定版）
+- **构建工具**: Maven（禁止引入 Gradle 配置）
+- **命名空间**: `jakarta.*`（禁止 `javax.*`）
+- **依赖注入**: 构造器注入（Constructor Injection），**禁止字段注入**（`@Autowired` on fields）
+- **日志**: 统一 `@Slf4j`，**禁止** `System.out` / `System.err`
+
+## 分层架构
+
+```
+controller/   → HTTP 适配层，仅处理请求/响应映射
+service/      → 业务逻辑与事务边界
+repository/   → 数据访问（JPA / MyBatis / R2DBC）
+dto/          → 请求/响应数据传输对象
+domain/       → 领域实体
+config/       → 配置类
+exception/    → 自定义异常与全局异常处理
+```
+
+### Controller 层
+
+- 只处理 HTTP 协议相关逻辑（参数校验、路由、状态码映射）
+- 使用 `@RestController` + `@RequestMapping` / `@GetMapping` 等
+- 参数校验使用 `@Valid` + Jakarta Validation（`jakarta.validation.*`）
+- **禁止**在 Controller 中编写业务逻辑或直接操作 Repository
+- 返回统一响应体（如 `Result<T>`），**禁止**直接返回 `ResponseEntity`（Service 层亦然）
+
+### Service 层
+
+- 承载核心业务逻辑与事务边界（`@Transactional`）
+- 通过构造器注入依赖
+- **禁止**直接返回 `ResponseEntity`
+- 接口 + 实现分离（`XxxService` / `XxxServiceImpl`）适用于复杂业务
+
+### Repository 层
+
+- 只做数据访问，不包含业务逻辑
+- JPA: 继承 `JpaRepository` / `CrudRepository`
+- 复杂查询优先 `@Query` 或 Specification，避免在 Service 中拼接 SQL
+
+## DTO 与数据对象
+
+- **优先使用 Java Record** 作为 DTO / 命令对象 / 查询结果
+- Request DTO 与 Response DTO 分离
+- 实体（Entity）与 DTO **禁止**混用；使用 MapStruct 或手动 Mapper 转换
+- Record 示例：
+
+```java
+public record CreateUserRequest(String username, String email) {}
+public record UserResponse(Long id, String username, String email) {}
+```
+
+## 统一响应与异常处理
+
+### 统一返回体
+
+```java
+public record Result<T>(int code, String message, T data) {
+    public static <T> Result<T> ok(T data) {
+        return new Result<>(200, "success", data);
+    }
+    public static <T> Result<T> fail(int code, String message) {
+        return new Result<>(code, message, null);
+    }
+}
+```
+
+- 业务失败使用自定义业务异常，由全局处理器转换为统一格式
+- 也可采用 Spring 6 原生 `ProblemDetail`（RFC 7807）作为错误响应
+
+### 异常处理
+
+- 业务异常继承自定义基类（如 `BusinessException`）
+- 使用 `@RestControllerAdvice` + `GlobalExceptionHandler` 统一处理
+- **禁止**在 Controller / Service 中 catch 后静默吞掉异常
+- 分层异常：`BusinessException`（可预期）vs 未捕获异常（500）
+
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(BusinessException.class)
+    public Result<Void> handleBusiness(BusinessException ex) {
+        return Result.fail(ex.getCode(), ex.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Result<Void> handleValidation(MethodArgumentNotValidException ex) {
+        String msg = ex.getBindingResult().getFieldErrors().stream()
+            .map(e -> e.getField() + ": " + e.getDefaultMessage())
+            .collect(Collectors.joining(", "));
+        return Result.fail(400, msg);
+    }
+}
+```
+
+## Spring Security
+
+- 使用 `SecurityFilterChain` Bean 配置安全策略
+- **禁止**继承 `WebSecurityConfigurerAdapter`（Spring Security 6 已移除）
+- 优先 Stateless JWT 或 OAuth2 Resource Server
+- CSRF 在 REST API 场景下通常禁用
+
+```java
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    return http
+        .csrf(AbstractHttpConfigurer::disable)
+        .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/actuator/health").permitAll()
+            .anyRequest().authenticated())
+        .build();
+}
+```
+
+## HTTP 客户端
+
+- **优先 `RestClient`**（Spring 6.1+），**禁止**新增 `RestTemplate` Bean
+- 需要响应式场景使用 `WebClient`
+- 配置超时、重试与熔断（Resilience4j）
+
+```java
+@Bean
+public RestClient restClient(RestClient.Builder builder) {
+    return builder.baseUrl("http://api.example.com").build();
+}
+```
+
+## 配置管理
+
+- 使用 `application.yml` + Profile（`application-dev.yml`、`application-prod.yml`）
+- **敏感信息禁止硬编码**：使用环境变量、`${ENV_VAR}` 或 Spring Cloud Config / Vault
+- 配置类使用 `@ConfigurationProperties` + Record 或 POJO
+- 启用 `@EnableConfigurationProperties`
+
+```yaml
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+app:
+  api:
+    base-url: ${API_BASE_URL:http://localhost:8080}
+```
+
+## Spring Cloud 微服务实践
+
+### 服务通信
+
+- API 网关：**Spring Cloud Gateway**（优先于 Zuul）
+- 客户端负载均衡：**Spring Cloud LoadBalancer**（替代 Ribbon）
+- 服务发现：Nacos / Eureka / Consul（按项目选型）
+
+### 弹性与容错
+
+- **Resilience4j**（优先）或 Sentinel
+- 熔断、限流、重试、舱壁隔离
+- 超时配置在 Gateway 与客户端两侧同时设置
+
+### 可观测性
+
+- **OpenTelemetry** 链路追踪 + Micrometer 指标
+- 统一接入 `spring-boot-starter-actuator`
+- 日志结构化（JSON）+ 关联 traceId
+
+### 数据架构
+
+- **Database per Service**：每个微服务独立数据库
+- 跨服务数据通过 API 或事件（Kafka / RabbitMQ）同步
+- **异步优先**：领域事件 + 消息队列解耦
+
+### 消息驱动
+
+- 事件发布：`ApplicationEvent`（进程内）或 Kafka / RabbitMQ（跨服务）
+- 消费者幂等设计 + 死信队列
+
+## Java 21+ 特性
+
+- 启用 Virtual Threads（`spring.threads.virtual.enabled=true`）
+- 使用 Record、Pattern Matching、Text Blocks
+- 避免过时 API（`Date` → `Instant` / `LocalDateTime`）
+
+## 测试策略
+
+- 单元测试：JUnit 5 + Mockito（**避免过度 Mock**）
+- 集成测试：**Testcontainers** + `@ServiceConnection`（Spring Boot 3.1+）
+- Web 层测试：`@WebMvcTest` + `MockMvc`
+- 数据层测试：`@DataJpaTest` + Testcontainers
+
+```java
+@SpringBootTest
+@Testcontainers
+class UserServiceIntegrationTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
+
+    @Autowired
+    private UserService userService;
+
+    @Test
+    void shouldCreateUser() {
+        // ...
+    }
+}
+```
+
+## 包结构示例
+
+```
+com.example.myapp
+├── MyAppApplication.java
+├── config/
+├── controller/
+├── service/
+│   └── impl/
+├── repository/
+├── domain/
+├── dto/
+│   ├── request/
+│   └── response/
+├── exception/
+├── mapper/
+└── event/
+```
+
+## 代码质量
+
+- 遵循 SOLID 原则
+- 单一职责：每个类只做一件事
+- 接口隔离：不强迫实现不需要的方法
+- 依赖倒置：依赖抽象而非具体实现
+- **禁止**使用已废弃 API
+- **禁止**字段注入、`System.out`、硬编码密钥
+- Lombok 允许：`@Slf4j`、`@RequiredArgsConstructor`、`@Builder`（Record 优先替代 `@Data`）
+
+## Maven 依赖管理
+
+- 使用 `spring-boot-starter-parent` 或 `spring-boot-dependencies` BOM
+- Spring Cloud 版本通过 `spring-cloud-dependencies` BOM 对齐
+- 版本号统一在 `properties` 或 BOM 中管理，子模块不单独写版本
+
+```xml
+<properties>
+    <java.version>21</java.version>
+    <spring-cloud.version>2024.0.0</spring-cloud.version>
+</properties>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>${spring-cloud.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```

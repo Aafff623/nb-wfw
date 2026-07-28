@@ -1,0 +1,54 @@
+# Java / Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# Node (Vue / Uniapp 阶段)
+node_modules/
+dist/
+.unpackage/
+*.local
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+application-local.yml
+application-local.yaml
+
+# OS / logs
+.DS_Store
+Thumbs.db
+*.log
+logs/
+
+# Scratch runtime noise (keep markdown issues)
+.scratch/**/__pycache__/
+.scratch/**/*.pyc
+
+# Build / coverage
+coverage/
+*.exe
+*.class

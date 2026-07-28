@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>nbwfw · README Preview</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown-light.min.css" />
+  <link rel="stylesheet" href="./preview-readme.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+</head>
+<body>
+  <header class="toolbar">
+    <div class="toolbar__title" id="title">nbwfw README</div>
+    <div class="toolbar__actions">
+      <span id="status" class="status">加载中…</span>
+      <button type="button" id="reload" class="btn">重新加载</button>
+    </div>
+  </header>
+  <main class="wrap">
+    <article id="content" class="markdown-body"></article>
+  </main>
+  <footer class="footer" id="footer"></footer>
+  <script>
+    window.__PREVIEW_README__ = {
+      lang: "zh-CN",
+      title: "nbwfw · README 本地预览",
+      hint: "改完 README.md 后点「重新加载」。必须用 HTTP 打开（端口 8090）。",
+      fileProtocolError: "当前是 file://，无法 fetch README。请在仓库根执行：python -m http.server 8090 ，然后打开 http://127.0.0.1:8090/preview-readme.html",
+      footer: "Agent 入口：AGENTS.md · CONTEXT.md · docs/ · assets/images/readme/"
+    };
+  </script>
+  <script src="./preview-readme.js"></script>
+</body>
+</html>

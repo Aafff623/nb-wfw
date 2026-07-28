@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "vscjava.vscode-java-pack",
+    "vmware.vscode-boot-dev-pack",
+    "cweijan.vscode-database-client2",
+    "ms-azuretools.vscode-docker",
+    "humao.rest-client",
+    "SonarSource.sonarlint-vscode",
+    "eamodio.gitlens",
+    "k--kato.intellij-idea-keybindings",
+    "ms-kubernetes-tools.vscode-kubernetes-tools"
+  ],
+  "unwantedRecommendations": [
+    "vscjava.vscode-gradle"
+  ]
+}

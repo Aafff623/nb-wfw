@@ -1,0 +1,22 @@
+---
+description: 本仓库定位——跟随「小坏说 Java · NB 微服务全栈」暑假深度学习
+alwaysApply: true
+---
+
+# 项目定位
+
+本仓库用于记录并实践 **小坏说 Java · NB 微服务全栈** 课程内容（B 站公开合集 + 课程页技术栈）。
+
+## 参考来源
+
+- 课程页：https://ai.e404e.cn/course
+- B 站合集：https://space.bilibili.com/1914134970/channel/collectiondetail?sid=8087830
+- 公开入口视频：https://www.bilibili.com/video/BV1RVyYBZE4z/
+
+## Agent 协作原则
+
+- 优先按课程「入职顺序 12 步」与视频大纲推进，不要跳步堆完整生产系统
+- 技术选型对齐课内栈：**Spring Boot + Spring Cloud Alibaba**（Nacos / Gateway / OpenFeign / Sentinel / Seata），而非盲目换成纯 Netflix OSS 或其它无关方案
+- 前端跟练方向：Vue3 + Element Plus + Vite；移动端：Uniapp + uView
+- 已有 `.cursor/rules/spring-boot-cloud.mdc` 作为后端编码规范；与课内冲突时，**以课内可运行链路为准**，规范作质量兜底
+- 本仓库是学习/实战笔记与代码落地点，不是要一次交付完整商业产品

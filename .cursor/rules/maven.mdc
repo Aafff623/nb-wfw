@@ -1,0 +1,16 @@
+---
+description: Maven 构建与依赖管理规范
+globs:
+  - "**/pom.xml"
+  - "**/.mvn/**"
+alwaysApply: false
+---
+
+# Maven 规范
+
+- 使用 Maven Wrapper（`mvnw`）保证 CI/CD 版本一致
+- 禁止在子模块 pom 中重复声明已由 BOM 管理的版本号
+- 插件版本在 `pluginManagement` 中统一管理
+- 常用命令：`mvn clean verify`（含测试）、`mvn spring-boot:run`
+- 本地调试优先 IDE Run/Debug，CI 使用 `mvn verify`
+- 禁止使用 Gradle 构建此项目

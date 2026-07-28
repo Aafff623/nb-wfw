@@ -5,6 +5,7 @@
 [![Java](https://img.shields.io/badge/Java-21-orange?style=flat-square)](#tech-stack)
 [![Spring](https://img.shields.io/badge/Spring-Boot%203%20%2B%20Cloud%20Alibaba-6DB33F?style=flat-square)](#tech-stack)
 [![Maven](https://img.shields.io/badge/Build-Maven-C71A36?style=flat-square)](#tech-stack)
+[![GitHub](https://img.shields.io/badge/GitHub-Aafff623%2Fnb--wfw-181717?style=flat-square)](https://github.com/Aafff623/nb-wfw)
 [![Status](https://img.shields.io/badge/Status-init%20skeleton-blue?style=flat-square)](#roadmap)
 
 <!-- 配图占位：出图后取消注释

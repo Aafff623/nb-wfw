@@ -13,7 +13,7 @@
 | B 站合集 | https://space.bilibili.com/1914134970/channel/collectiondetail?sid=8087830 |
 | 公开入口 | https://www.bilibili.com/video/BV1RVyYBZE4z/ |
 | 受众 | 自己（小 A） |
-| 当前阶段 | project-init 完成后等待首个业务 theme |
+| 当前阶段 | project-init 完成；远程 https://github.com/Aafff623/nb-wfw |
 
 ## 目标
 
